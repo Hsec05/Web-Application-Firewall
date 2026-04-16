@@ -139,7 +139,9 @@ This project is a **three-tier web security system** that simulates a real-world
 - JWT-based authentication with 24-hour token expiry
 - Bcrypt password hashing
 - Forgot-password / reset-password flow (token-based)
-- Role-based route protection
+- **Role-Based Access Control (RBAC)** — three distinct roles: `admin`, `analyst`, `viewer`
+- Role enforcement on both frontend (sidebar nav filtering) and backend (`requireAdmin` middleware)
+- Account deactivation / reactivation without deletion
 - Direction-based CAPTCHA challenge for suspicious IPs
 
 ---
@@ -520,6 +522,140 @@ The WAF configuration is stored in `soc_settings` (PostgreSQL) and refreshed eve
 
 ---
 
+## 🔐 Role-Based Access Control (RBAC)
+
+The system implements a three-tier RBAC model enforced at both the **backend API level** (JWT middleware) and the **frontend UI level** (sidebar navigation filtering).
+
+### Roles
+
+| Role | Description | Who Gets It |
+|------|-------------|-------------|
+| `admin` | Full system access — can manage users, change settings, view audit logs | System administrator |
+| `analyst` | Operational access — can investigate incidents, manage rules, block IPs | SOC analyst / security engineer |
+| `viewer` | Read-only access — can view dashboards, logs, analytics, and reports | Security viewer / management |
+
+### Permission Matrix
+
+| Feature / Page | `admin` | `analyst` | `viewer` |
+|----------------|:-------:|:---------:|:--------:|
+| Dashboard (`/`) | ✅ | ✅ | ✅ |
+| Threat Map (`/threat-map`) | ✅ | ✅ | ✅ |
+| Attack Logs (`/logs`) | ✅ | ✅ | ✅ |
+| Analytics (`/analytics`) | ✅ | ✅ | ✅ |
+| Reports (`/reports`) | ✅ | ✅ | ✅ |
+| IP Intelligence (`/ip-intel`) | ✅ | ✅ | ❌ |
+| Incidents (`/incidents`) | ✅ | ✅ | ❌ |
+| Rules (`/rules`) | ✅ | ✅ | ❌ |
+| Users (`/users`) | ✅ | ❌ | ❌ |
+| Audit Logs (`/audit-logs`) | ✅ | ❌ | ❌ |
+| System Settings (`/system-settings`) | ✅ | ❌ | ❌ |
+
+### How It Is Enforced
+
+**Backend — `requireAdmin` middleware** (in `routes/users.js`, `routes/auditLogs.js`, `routes/settings.js`):
+
+```js
+function requireAdmin(req, res, next) {
+  const payload = jwt.verify(token, JWT_SECRET);
+  if (payload.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+  req.authUser = payload;
+  next();
+}
+```
+
+Routes guarded by `requireAdmin`:
+- `GET/PATCH/DELETE /api/users` — user management
+- `GET /api/audit-logs` — audit trail
+- `GET/PATCH /api/settings` — WAF configuration
+- `PUT /api/settings/whitelist` — IP whitelist management
+
+**Frontend — Sidebar navigation filtering** (in `src/components/layout/AppSidebar.tsx`):
+
+```ts
+// Admin-only pages — only injected into nav when role === 'admin'
+...(user?.role === 'admin' ? [
+  { title: 'Users',           href: '/users'           },
+  { title: 'Audit Logs',      href: '/audit-logs'      },
+  { title: 'System Settings', href: '/system-settings' },
+] : []),
+
+// Viewer role — restricted to read-only pages only
+const viewerAllowedHrefs = new Set(['/', '/threat-map', '/logs', '/analytics', '/reports']);
+const navItems = user?.role === 'viewer'
+  ? allNavItems.filter(item => viewerAllowedHrefs.has(item.href))
+  : allNavItems;
+```
+
+### Valid Roles & Default
+
+The backend validates roles on registration and update. Any unrecognised value defaults to `analyst`:
+
+```js
+const VALID_ROLES = ["admin", "analyst", "viewer"];
+const assignedRole = VALID_ROLES.includes(role) ? role : "analyst";
+```
+
+### Account Lifecycle
+
+Accounts can be deactivated without deletion (soft-disable via `is_active = false`). A deactivated user's login attempt is rejected and written to the audit log with `outcome: "failure"`. Admins cannot deactivate or delete their own account.
+
+---
+
+## 🗺️ Use Case Diagram
+
+The diagram below maps every actor to the system use cases they can trigger, including the internal `«includes»` relationships for the WAF core.
+
+```
+Actors & their use cases
+─────────────────────────────────────────────────────────────────────
+Web User          →  Process HTTP Request
+Malicious User    →  Process HTTP Request
+
+Security Viewer   →  Generate Reports
+                  →  View Dashboard
+
+Security Analyst  →  Generate Reports
+                  →  View Dashboard
+                  →  Manage WAF Rules
+                  →  Review Security Logs
+
+Security Admin    →  Generate Reports
+                  →  View Dashboard
+                  →  Manage WAF Rules
+                  →  Review Security Logs
+
+Internal «includes» relationships (triggered by Process HTTP Request)
+─────────────────────────────────────────────────────────────────────
+Process HTTP Request  «includes»  Correlate Threats       (incidentEngine.js)
+Process HTTP Request  «includes»  Inspect Payloads (Snort) (snortRules.js)
+Process HTTP Request  «includes»  Analyze IP Risk          (geoip.js + ipIntelligence)
+```
+
+### Actor Descriptions
+
+| Actor | Maps To | Description |
+|-------|---------|-------------|
+| **Web User** | Anonymous browser | Legitimate traffic passing through the WAF to the target site |
+| **Malicious User** | Attacker / scanner | Any source sending attack payloads; WAF detects, logs, and optionally blocks |
+| **Security Viewer** | `viewer` role | Read-only observer — views dashboards and reports |
+| **Security Analyst** | `analyst` role | Active SOC operator — manages rules, investigates logs and incidents |
+| **Security Admin** | `admin` role | Full system control — users, settings, audit trail, all analyst capabilities |
+
+### Use Case Descriptions
+
+| Use Case | Triggered By | Handled In |
+|----------|-------------|------------|
+| **Process HTTP Request** | Web User, Malicious User | `wafMiddleware.js` |
+| **Correlate Threats** | *(includes from above)* | `incidentEngine.js` — groups alerts into incidents |
+| **Inspect Payloads (Snort)** | *(includes from above)* | `snortRules.js` — PCRE pattern matching |
+| **Analyze IP Risk** | *(includes from above)* | `geoip.js` + `/api/ip` routes + AbuseIPDB |
+| **Generate Reports** | Viewer, Analyst, Admin | `pdfGenerator.js` + `/api/reports` |
+| **View Dashboard** | Viewer, Analyst, Admin | `Dashboard.tsx` + `/api/dashboard` |
+| **Manage WAF Rules** | Analyst, Admin | `Rules.tsx` + `/api/rules` |
+| **Review Security Logs** | Analyst, Admin | `AttackLogs.tsx`, `AuditLogs.tsx` + `/api/alerts`, `/api/audit-logs` |
+
+---
+
 ## 🔌 API Reference
 
 All endpoints are prefixed with `http://localhost:5000`.
@@ -587,7 +723,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 ## 🗄️ Database Schema
 
-The backend auto-creates these tables on first startup:
+The backend auto-creates these tables on first startup (8 total):
 
 ```sql
 -- Every WAF detection event
@@ -655,11 +791,35 @@ CREATE TABLE soc_users (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Live WAF configuration
+-- Live WAF configuration (synced to WAF middleware every 30s)
 CREATE TABLE soc_settings (
-  key              VARCHAR(100) PRIMARY KEY,
-  value            JSONB
+  key         VARCHAR(120) PRIMARY KEY,
+  value       JSONB        NOT NULL,
+  description TEXT,
+  category    VARCHAR(60)  NOT NULL DEFAULT 'general',  -- thresholds | whitelist | alerts | integrations | reports
+  updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_by  VARCHAR(80)
 );
+
+-- Immutable admin action audit trail
+CREATE TABLE soc_audit_log (
+  id          SERIAL PRIMARY KEY,
+  timestamp   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  user_id     INTEGER,
+  username    VARCHAR(80),
+  role        VARCHAR(20),
+  action      VARCHAR(120) NOT NULL,
+  category    VARCHAR(60)  NOT NULL DEFAULT 'general',
+  target      TEXT,
+  target_id   VARCHAR(120),
+  detail      JSONB,
+  ip_address  VARCHAR(60),
+  user_agent  TEXT,
+  outcome     VARCHAR(20) NOT NULL DEFAULT 'success'   -- success | failure
+);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON soc_audit_log(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_username  ON soc_audit_log(username);
+CREATE INDEX IF NOT EXISTS idx_audit_action    ON soc_audit_log(action);
 ```
 
 **Useful pgAdmin queries:**
