@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — NexMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg:#0a0a0f; --surface:#13131a; --border:#1e1e2e; --accent:#6c63ff; --accent2:#ff6584; --text:#e8e8f0; --muted:#6b6b80; --green:#00d68f; --red:#ff4757; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    a { color: inherit; text-decoration: none; }
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 4rem; border-bottom: 1px solid var(--border); }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; background: linear-gradient(135deg, #6c63ff, #ff6584); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a { font-size: 0.9rem; color: var(--muted); }
+    .nav-links a:hover { color: var(--text); }
+
+    .login-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 3rem; }
+    .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 3rem; width: 100%; max-width: 440px; }
+    .login-header { text-align: center; margin-bottom: 2.5rem; }
+    .login-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .login-header h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .login-header p { color: var(--muted); font-size: 0.9rem; }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .form-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.8rem 1rem; border-radius: 10px; font-size: 0.95rem; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+    .form-input:focus { border-color: var(--accent); }
+    .password-wrap { position: relative; }
+    .toggle-pw { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
+
+    .login-btn { width: 100%; background: var(--accent); color: white; border: none; padding: 0.9rem; border-radius: 10px; font-size: 1rem; font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.2s; margin-top: 0.5rem; }
+    .login-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .login-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .error-msg { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3); color: var(--red); padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1rem; display: none; }
+    .error-msg.show { display: block; }
+    .success-msg { background: rgba(0,214,143,0.1); border: 1px solid rgba(0,214,143,0.3); color: var(--green); padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1rem; display: none; }
+    .success-msg.show { display: block; }
+
+    .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--muted); font-size: 0.85rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .demo-accounts { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 1.5rem; }
+    .demo-accounts h4 { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    .demo-account { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; cursor: pointer; transition: color 0.2s; }
+    .demo-account:last-child { border-bottom: none; }
+    .demo-account:hover { color: var(--accent); }
+    .demo-account span { color: var(--muted); font-family: monospace; }
+
+    .attempt-counter { text-align: center; font-size: 0.8rem; color: var(--muted); margin-top: 0.75rem; }
+    .attempt-counter.warning { color: var(--accent2); }
+
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 4rem; text-align: center; color: var(--muted); font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">NexMart</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/products">Products</a>
+    <a href="/contact">Contact</a>
+  </div>
+</nav>
+
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-icon">🔐</div>
+      <h1>Welcome Back</h1>
+      <p>Sign in to your NexMart account</p>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="success-msg" id="successMsg"></div>
+
+    <!-- LOGIN FORM — Brute force + SQLi test surface -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="password-wrap">
+          <input class="form-input" type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" />
+          <button type="button" class="toggle-pw" onclick="togglePassword()">👁</button>
+        </div>
+      </div>
+      <button class="login-btn" type="submit" id="loginBtn">Sign In</button>
+      <div class="attempt-counter" id="attemptCounter"></div>
+    </form>
+
+    <div class="divider">or use a demo account</div>
+
+    <div class="demo-accounts">
+      <h4>Demo Accounts</h4>
+      <div class="demo-account" onclick="fillCredentials('admin','admin123')">
+        admin <span>admin123</span>
+      </div>
+      <div class="demo-account" onclick="fillCredentials('john','pass123')">
+        john <span>pass123</span>
+      </div>
+      <div class="demo-account" onclick="fillCredentials('alice','alice2024')">
+        alice <span>alice2024</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>© 2026 NexMart Inc. All rights reserved.</footer>
+
+<script>
+  let attempts = 0;
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('loginBtn');
+    const errEl = document.getElementById('errorMsg');
+    const sucEl = document.getElementById('successMsg');
+
+    if (!username || !password) {
+      showError('Please enter both username and password.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    errEl.classList.remove('show');
+    sucEl.classList.remove('show');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        sucEl.textContent = `✓ Welcome back, ${data.user.name}! Redirecting...`;
+        sucEl.classList.add('show');
+        attempts = 0;
+        setTimeout(() => window.location.href = '/', 1500);
+      } else {
+        attempts++;
+        updateCounter();
+        showError(data.error || 'Login failed.');
+      }
+    } catch (err) {
+      attempts++;
+      updateCounter();
+      showError('Request blocked by WAF or network error.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function updateCounter() {
+    const el = document.getElementById('attemptCounter');
+    if (attempts > 0) {
+      el.textContent = `${attempts} failed attempt${attempts > 1 ? 's' : ''}`;
+      el.className = 'attempt-counter' + (attempts >= 3 ? ' warning' : '');
+    }
+  }
+
+  function fillCredentials(user, pass) {
+    document.getElementById('username').value = user;
+    document.getElementById('password').value = pass;
+  }
+
+  function togglePassword() {
+    const pw = document.getElementById('password');
+    pw.type = pw.type === 'password' ? 'text' : 'password';
+  }
+</script>
+</body>
+</html>

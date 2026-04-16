@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cart — NexMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg:#0a0a0f; --surface:#13131a; --border:#1e1e2e; --accent:#6c63ff; --text:#e8e8f0; --muted:#6b6b80; --green:#00d68f; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    a { color: inherit; text-decoration: none; }
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 4rem; border-bottom: 1px solid var(--border); }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; background: linear-gradient(135deg, #6c63ff, #ff6584); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a { font-size: 0.9rem; color: var(--muted); }
+    .nav-btn { background: var(--accent); color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; }
+    .page { max-width: 800px; margin: 0 auto; padding: 4rem; flex: 1; }
+    h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700; margin-bottom: 2rem; }
+    .empty-cart { text-align: center; padding: 4rem; color: var(--muted); }
+    .empty-cart div { font-size: 4rem; margin-bottom: 1rem; }
+    .cart-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+    .cart-item-name { font-weight: 500; }
+    .remove-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.2rem; }
+    .remove-btn:hover { color: #ff4757; }
+    .cart-footer { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; }
+    .checkout-btn { width: 100%; background: var(--accent); color: white; border: none; padding: 0.9rem; border-radius: 10px; font-size: 1rem; font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; margin-top: 1rem; transition: opacity 0.2s; }
+    .checkout-btn:hover { opacity: 0.9; }
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 4rem; text-align: center; color: var(--muted); font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">NexMart</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/products">Products</a>
+    <a href="/contact">Contact</a>
+    <a href="/login" class="nav-btn">Sign In</a>
+  </div>
+</nav>
+<div class="page">
+  <h1>Your Cart 🛒</h1>
+  <div id="cartContent"></div>
+</div>
+<footer>© 2026 NexMart Inc. All rights reserved.</footer>
+<script>
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const el = document.getElementById('cartContent');
+  if (cart.length === 0) {
+    el.innerHTML = '<div class="empty-cart"><div>🛒</div><p>Your cart is empty</p><br><a href="/products" style="color:var(--accent)">Browse Products →</a></div>';
+  } else {
+    el.innerHTML = cart.map((item, i) => `
+      <div class="cart-item">
+        <div class="cart-item-name">${item.name}</div>
+        <button class="remove-btn" onclick="removeItem(${i})">✕</button>
+      </div>`).join('') +
+      `<div class="cart-footer">
+        <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:0.9rem">
+          <span>${cart.length} item(s)</span>
+        </div>
+        <button class="checkout-btn" onclick="alert('Checkout coming soon!')">Proceed to Checkout →</button>
+      </div>`;
+  }
+  function removeItem(i) {
+    cart.splice(i, 1);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    location.reload();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Products — NexMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg:#0a0a0f; --surface:#13131a; --border:#1e1e2e; --accent:#6c63ff; --accent2:#ff6584; --text:#e8e8f0; --muted:#6b6b80; --green:#00d68f; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 4rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,10,15,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; background: linear-gradient(135deg, #6c63ff, #ff6584); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a { font-size: 0.9rem; color: var(--muted); transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-btn { background: var(--accent); color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; }
+
+    .page { max-width: 1200px; margin: 0 auto; padding: 3rem 4rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .page-header p { color: var(--muted); }
+
+    /* SEARCH + FILTER */
+    .search-bar { display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center; flex-wrap: wrap; }
+    .search-input-wrap { position: relative; flex: 1; min-width: 250px; }
+    .search-input-wrap input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.75rem 1rem 0.75rem 2.8rem; border-radius: 10px; font-size: 0.95rem; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+    .search-input-wrap input:focus { border-color: var(--accent); }
+    .search-icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--muted); }
+    .search-btn { background: var(--accent); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; font-size: 0.95rem; font-family: 'DM Sans', sans-serif; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
+    .search-btn:hover { opacity: 0.85; }
+    .filter-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+    .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(108,99,255,0.08); }
+
+    /* SEARCH RESULT NOTE */
+    .search-result { background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.2); border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.875rem; color: var(--muted); margin-bottom: 1.5rem; display: none; }
+    .search-result.show { display: block; }
+
+    /* PRODUCTS GRID */
+    .products-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+    .product-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; transition: border-color 0.2s, transform 0.2s; cursor: pointer; }
+    .product-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .product-emoji { font-size: 3.5rem; text-align: center; margin-bottom: 1rem; }
+    .product-name { font-weight: 500; font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .product-category { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .product-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .product-price { color: var(--accent); font-weight: 700; font-size: 1.15rem; }
+    .product-rating { color: var(--muted); font-size: 0.8rem; }
+    .star { color: #fbbf24; }
+    .stock { font-size: 0.78rem; color: var(--green); margin-bottom: 1rem; }
+    .add-btn { width: 100%; background: var(--accent); color: white; border: none; padding: 0.6rem; border-radius: 8px; font-size: 0.875rem; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: opacity 0.2s; }
+    .add-btn:hover { opacity: 0.85; }
+
+    /* PRODUCT DETAIL MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; padding: 2rem; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; }
+    .modal-close { position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; }
+    .modal-close:hover { color: var(--text); }
+    .modal-header { display: flex; gap: 2rem; margin-bottom: 2rem; align-items: flex-start; }
+    .modal-emoji { font-size: 5rem; }
+    .modal-info h2 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .modal-price { color: var(--accent); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .modal-rating { color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem; }
+
+    /* COMMENTS */
+    .comments-section h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .comment { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; }
+    .comment-user { font-weight: 500; font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .comment-text { color: var(--muted); font-size: 0.875rem; line-height: 1.5; }
+    .comment-date { color: var(--muted); font-size: 0.75rem; margin-top: 0.25rem; }
+    .comment-form { margin-top: 1.5rem; }
+    .comment-form h4 { font-size: 0.95rem; font-weight: 500; margin-bottom: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .form-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.65rem 0.9rem; border-radius: 8px; font-size: 0.875rem; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+    .form-input:focus { border-color: var(--accent); }
+    textarea.form-input { resize: vertical; min-height: 80px; margin-bottom: 0.75rem; }
+    .submit-btn { background: var(--accent); color: white; border: none; padding: 0.65rem 1.5rem; border-radius: 8px; font-size: 0.875rem; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: opacity 0.2s; }
+    .submit-btn:hover { opacity: 0.85; }
+    .success-msg { color: var(--green); font-size: 0.875rem; margin-top: 0.5rem; display: none; }
+
+    footer { border-top: 1px solid var(--border); padding: 2rem 4rem; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">NexMart</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/products">Products</a>
+    <a href="/contact">Contact</a>
+    <a href="/login" class="nav-btn">Sign In</a>
+    <a href="/cart">🛒 <span id="cartCount">0</span></a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>All Products</h1>
+    <p>Explore our full catalog of premium products</p>
+  </div>
+
+  <!-- SEARCH BAR — SQLi + XSS test surface -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search products... (try: headphones, laptop)" />
+    </div>
+    <button class="search-btn" onclick="doSearch()">Search</button>
+  </div>
+
+  <div class="filter-btns" style="margin-bottom:1.5rem">
+    <button class="filter-btn active" onclick="filterCategory('all', this)">All</button>
+    <button class="filter-btn" onclick="filterCategory('electronics', this)">Electronics</button>
+    <button class="filter-btn" onclick="filterCategory('sports', this)">Sports</button>
+    <button class="filter-btn" onclick="filterCategory('home', this)">Home</button>
+    <button class="filter-btn" onclick="filterCategory('travel', this)">Travel</button>
+  </div>
+
+  <div class="search-result" id="searchResult"></div>
+  <div class="products-grid" id="productsGrid"></div>
+</div>
+
+<!-- PRODUCT DETAIL MODAL with comments — XSS test surface -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-header">
+      <div class="modal-emoji" id="modalEmoji"></div>
+      <div class="modal-info">
+        <h2 id="modalName"></h2>
+        <div class="modal-price" id="modalPrice"></div>
+        <div class="modal-rating" id="modalRating"></div>
+        <button class="add-btn" style="width:auto;padding:0.6rem 1.5rem" onclick="addToCart()">Add to Cart</button>
+      </div>
+    </div>
+    <div class="comments-section">
+      <h3>Customer Reviews</h3>
+      <div id="commentsList"></div>
+      <!-- COMMENT FORM — XSS test surface -->
+      <div class="comment-form">
+        <h4>Leave a Review</h4>
+        <div class="form-row">
+          <input class="form-input" id="commentUser" placeholder="Your name" />
+          <input class="form-input" id="commentEmail" placeholder="Email (optional)" />
+        </div>
+        <textarea class="form-input" id="commentText" placeholder="Write your review here..."></textarea>
+        <button class="submit-btn" onclick="submitComment()">Post Review</button>
+        <div class="success-msg" id="commentSuccess">✓ Review posted successfully!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="logo" style="font-size:1.1rem">NexMart</div>
+  <div>© 2026 NexMart Inc.</div>
+</footer>
+
+<script>
+  let currentProductId = null;
+  let currentCategory = 'all';
+
+  function loadProducts(search = '', category = 'all') {
+    let url = `/api/products?`;
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (category !== 'all') url += `category=${encodeURIComponent(category)}`;
+
+    fetch(url)
+      .then(r => r.json())
+      .then(({ products, total, search: q }) => {
+        const grid = document.getElementById('productsGrid');
+        const resultEl = document.getElementById('searchResult');
+
+        if (q) {
+          resultEl.textContent = `Showing ${total} result(s) for "${q}"`;
+          resultEl.classList.add('show');
+        } else {
+          resultEl.classList.remove('show');
+        }
+
+        if (products.length === 0) {
+          grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:3rem">No products found.</p>';
+          return;
+        }
+
+        grid.innerHTML = products.map(p => `
+          <div class="product-card" onclick="openProduct(${p.id})">
+            <div class="product-emoji">${p.image}</div>
+            <div class="product-category">${p.category}</div>
+            <div class="product-name">${p.name}</div>
+            <div class="product-meta">
+              <div class="product-price">$${p.price}</div>
+              <div class="product-rating"><span class="star">★</span> ${p.rating}</div>
+            </div>
+            <div class="stock">✓ ${p.stock} in stock</div>
+            <button class="add-btn" onclick="event.stopPropagation();addToCartDirect(${p.id},'${p.name}')">Add to Cart</button>
+          </div>`).join('');
+      });
+  }
+
+  function doSearch() {
+    const q = document.getElementById('searchInput').value;
+    loadProducts(q, currentCategory);
+  }
+
+  document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+
+  function filterCategory(cat, btn) {
+    currentCategory = cat;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadProducts(document.getElementById('searchInput').value, cat);
+  }
+
+  function openProduct(id) {
+    currentProductId = id;
+    fetch(`/api/products/${id}`)
+      .then(r => r.json())
+      .then(({ product, comments }) => {
+        document.getElementById('modalEmoji').textContent = product.image;
+        document.getElementById('modalName').textContent = product.name;
+        document.getElementById('modalPrice').textContent = `$${product.price}`;
+        document.getElementById('modalRating').textContent = `★ ${product.rating} · ${product.stock} in stock`;
+        const list = document.getElementById('commentsList');
+        if (comments.length === 0) {
+          list.innerHTML = '<p style="color:var(--muted);font-size:0.875rem">No reviews yet. Be the first!</p>';
+        } else {
+          list.innerHTML = comments.map(c => `
+            <div class="comment">
+              <div class="comment-user">${c.user}</div>
+              <div class="comment-text">${c.text}</div>
+              <div class="comment-date">${c.date}</div>
+            </div>`).join('');
+        }
+        document.getElementById('commentSuccess').style.display = 'none';
+        document.getElementById('modalOverlay').classList.add('open');
+      });
+  }
+
+  function closeModal(e) {
+    if (!e || e.target === document.getElementById('modalOverlay')) {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+  }
+
+  function submitComment() {
+    const text = document.getElementById('commentText').value.trim();
+    const user = document.getElementById('commentUser').value.trim() || 'anonymous';
+    if (!text) return;
+
+    fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: currentProductId, user, text })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('commentSuccess').style.display = 'block';
+        document.getElementById('commentText').value = '';
+        document.getElementById('commentUser').value = '';
+        openProduct(currentProductId);
+      }
+    })
+    .catch(() => alert('Request was blocked by WAF.'));
+  }
+
+  function addToCartDirect(id, name) {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    cart.push({ id, name });
+    localStorage.setItem('cart', JSON.stringify(cart));
+    document.getElementById('cartCount').textContent = cart.length;
+  }
+
+  function addToCart() {
+    if (currentProductId) {
+      const name = document.getElementById('modalName').textContent;
+      addToCartDirect(currentProductId, name);
+    }
+  }
+
+  // Check URL params for direct product open
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('id')) openProduct(parseInt(params.get('id')));
+
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  document.getElementById('cartCount').textContent = cart.length;
+
+  loadProducts();
+</script>
+</body>
+</html>

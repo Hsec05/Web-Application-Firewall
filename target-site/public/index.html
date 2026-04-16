@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexMart — Next-Gen Shopping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #1e1e2e;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --green: #00d68f;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 4rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,10,15,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; background: linear-gradient(135deg, #6c63ff, #ff6584); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a { font-size: 0.9rem; color: var(--muted); transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-btn { background: var(--accent); color: white; padding: 0.5rem 1.2rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; transition: opacity 0.2s; }
+    .nav-btn:hover { opacity: 0.85; }
+    .cart-icon { position: relative; cursor: pointer; }
+    .cart-badge { position: absolute; -top: 8px; -right: 8px; background: var(--accent2); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+
+    /* HERO */
+    .hero { padding: 6rem 4rem 4rem; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; max-width: 1200px; margin: 0 auto; }
+    .hero-tag { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.3); color: var(--accent); padding: 0.3rem 0.9rem; border-radius: 100px; font-size: 0.8rem; font-weight: 500; margin-bottom: 1.5rem; }
+    .hero-tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .hero h1 { font-family: 'Syne', sans-serif; font-size: 3.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; }
+    .hero h1 span { background: linear-gradient(135deg, #6c63ff, #ff6584); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { color: var(--muted); font-size: 1.1rem; line-height: 1.7; margin-bottom: 2rem; }
+    .hero-btns { display: flex; gap: 1rem; }
+    .btn-primary { background: var(--accent); color: white; padding: 0.875rem 2rem; border-radius: 10px; font-weight: 500; font-size: 0.95rem; transition: transform 0.2s, box-shadow 0.2s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.35); }
+    .btn-ghost { border: 1px solid var(--border); color: var(--text); padding: 0.875rem 2rem; border-radius: 10px; font-weight: 500; font-size: 0.95rem; transition: border-color 0.2s; }
+    .btn-ghost:hover { border-color: var(--accent); }
+    .hero-visual { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; position: relative; overflow: hidden; }
+    .hero-visual::before { content: ''; position: absolute; top: -40px; right: -40px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 70%); }
+    .product-grid-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .mini-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; transition: border-color 0.2s; }
+    .mini-card:hover { border-color: var(--accent); }
+    .mini-card .emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+    .mini-card .name { font-size: 0.8rem; font-weight: 500; margin-bottom: 0.25rem; }
+    .mini-card .price { font-size: 0.85rem; color: var(--accent); font-weight: 600; }
+
+    /* FEATURES */
+    .features { padding: 4rem; max-width: 1200px; margin: 0 auto; }
+    .section-title { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .section-sub { color: var(--muted); margin-bottom: 3rem; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; transition: border-color 0.2s, transform 0.2s; }
+    .feature-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .feature-card h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .feature-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+    /* PRODUCTS PREVIEW */
+    .products-section { padding: 4rem; max-width: 1200px; margin: 0 auto; }
+    .products-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+    .product-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; transition: border-color 0.2s, transform 0.2s; cursor: pointer; }
+    .product-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .product-emoji { font-size: 3rem; margin-bottom: 1rem; text-align: center; }
+    .product-name { font-weight: 500; font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .product-meta { display: flex; justify-content: space-between; align-items: center; }
+    .product-price { color: var(--accent); font-weight: 600; font-size: 1.1rem; }
+    .product-rating { color: var(--muted); font-size: 0.8rem; }
+    .star { color: #fbbf24; }
+
+    /* STATS */
+    .stats { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 3rem 4rem; }
+    .stats-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; text-align: center; }
+    .stat-num { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #6c63ff, #ff6584); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-label { color: var(--muted); font-size: 0.875rem; margin-top: 0.25rem; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 2rem 4rem; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 0.875rem; max-width: 100%; }
+    .footer-links { display: flex; gap: 2rem; }
+    .footer-links a:hover { color: var(--text); }
+
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; padding: 3rem 1.5rem; }
+      .features-grid, .products-row { grid-template-columns: 1fr 1fr; }
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">NexMart</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/products">Products</a>
+    <a href="/contact">Contact</a>
+    <a href="/login" class="nav-btn">Sign In</a>
+    <a href="/cart" class="cart-icon">🛒 <span id="cartCount">0</span></a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="hero-tag">Now with AI recommendations</div>
+    <h1>Shop the <span>Future</span> of Retail</h1>
+    <p>Discover premium products curated for your lifestyle. Fast shipping, secure checkout, and 30-day returns on everything.</p>
+    <div class="hero-btns">
+      <a href="/products" class="btn-primary">Browse Products</a>
+      <a href="/login" class="btn-ghost">Sign In</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="product-grid-mini" id="heroGrid"></div>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stats-inner">
+    <div><div class="stat-num">50K+</div><div class="stat-label">Products</div></div>
+    <div><div class="stat-num">2M+</div><div class="stat-label">Happy Customers</div></div>
+    <div><div class="stat-num">99.9%</div><div class="stat-label">Uptime</div></div>
+    <div><div class="stat-num">4.9★</div><div class="stat-label">Avg Rating</div></div>
+  </div>
+</div>
+
+<section class="products-section">
+  <h2 class="section-title">Featured Products</h2>
+  <p class="section-sub">Hand-picked just for you</p>
+  <div class="products-row" id="featuredProducts"></div>
+  <div style="text-align:center">
+    <a href="/products" class="btn-primary">View All Products →</a>
+  </div>
+</section>
+
+<section class="features">
+  <h2 class="section-title">Why NexMart?</h2>
+  <p class="section-sub">Built for the modern shopper</p>
+  <div class="features-grid">
+    <div class="feature-card"><div class="feature-icon">⚡</div><h3>Lightning Fast</h3><p>Same-day delivery in major cities. Express shipping available worldwide.</p></div>
+    <div class="feature-card"><div class="feature-icon">🔒</div><h3>Secure Payments</h3><p>256-bit SSL encryption on all transactions. Your data is always safe.</p></div>
+    <div class="feature-card"><div class="feature-icon">↩️</div><h3>Easy Returns</h3><p>30-day hassle-free returns. No questions asked, full refund guaranteed.</p></div>
+    <div class="feature-card"><div class="feature-icon">🎯</div><h3>Smart Recommendations</h3><p>AI-powered product suggestions tailored to your unique taste.</p></div>
+    <div class="feature-card"><div class="feature-icon">💬</div><h3>24/7 Support</h3><p>Real human support agents available around the clock via chat or email.</p></div>
+    <div class="feature-card"><div class="feature-icon">🌍</div><h3>Global Shipping</h3><p>We ship to 180+ countries. Customs handling and tracking included.</p></div>
+  </div>
+</section>
+
+<footer>
+  <div class="logo" style="font-size:1.1rem">NexMart</div>
+  <div class="footer-links">
+    <a href="/products">Products</a>
+    <a href="/contact">Contact</a>
+    <a href="/login">Account</a>
+  </div>
+  <div>© 2026 NexMart Inc. All rights reserved.</div>
+</footer>
+
+<script>
+  fetch('/api/products')
+    .then(r => r.json())
+    .then(({ products }) => {
+      // Hero mini grid
+      const heroGrid = document.getElementById('heroGrid');
+      products.slice(0, 4).forEach(p => {
+        heroGrid.innerHTML += `
+          <div class="mini-card">
+            <div class="emoji">${p.image}</div>
+            <div class="name">${p.name.split(' ').slice(0,3).join(' ')}</div>
+            <div class="price">$${p.price}</div>
+          </div>`;
+      });
+      // Featured products
+      const featured = document.getElementById('featuredProducts');
+      products.slice(0, 4).forEach(p => {
+        featured.innerHTML += `
+          <div class="product-card" onclick="window.location='/products?id=${p.id}'">
+            <div class="product-emoji">${p.image}</div>
+            <div class="product-name">${p.name}</div>
+            <div class="product-meta">
+              <div class="product-price">$${p.price}</div>
+              <div class="product-rating"><span class="star">★</span> ${p.rating}</div>
+            </div>
+          </div>`;
+      });
+    });
+
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  document.getElementById('cartCount').textContent = cart.length;
+</script>
+</body>
+</html>

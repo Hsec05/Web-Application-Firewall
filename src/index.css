@@ -1,0 +1,341 @@
+/* SOC Dashboard Design System - Cybersecurity Dark Theme */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Core backgrounds - Deep navy/slate */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+
+    /* Card surfaces - Slightly elevated */
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 96%;
+
+    /* Popover/Modal */
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 96%;
+
+    /* Primary - Cyan/Teal accent */
+    --primary: 187 85% 53%;
+    --primary-foreground: 222 47% 6%;
+
+    /* Secondary - Muted slate */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 90%;
+
+    /* Muted surfaces */
+    --muted: 217 33% 12%;
+    --muted-foreground: 215 20% 55%;
+
+    /* Accent - Electric cyan glow */
+    --accent: 187 85% 53%;
+    --accent-foreground: 222 47% 6%;
+
+    /* Destructive - Alert red */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Borders and inputs */
+    --border: 217 33% 18%;
+    --input: 217 33% 15%;
+    --ring: 187 85% 53%;
+
+    --radius: 0.5rem;
+
+    /* Severity colors */
+    --severity-critical: 0 84% 60%;
+    --severity-high: 25 95% 53%;
+    --severity-medium: 45 93% 47%;
+    --severity-low: 217 91% 60%;
+    --severity-info: 187 85% 53%;
+    --severity-safe: 142 76% 46%;
+
+    /* Status colors */
+    --status-blocked: 0 84% 60%;
+    --status-allowed: 142 76% 46%;
+    --status-warning: 45 93% 47%;
+    
+    /* Chart colors */
+    --chart-1: 187 85% 53%;
+    --chart-2: 142 76% 46%;
+    --chart-3: 25 95% 53%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 280 65% 60%;
+    --chart-6: 45 93% 47%;
+
+    /* Glow effects */
+    --glow-cyan: 0 0 20px hsl(187 85% 53% / 0.4);
+    --glow-red: 0 0 20px hsl(0 84% 60% / 0.4);
+    --glow-green: 0 0 20px hsl(142 76% 46% / 0.4);
+
+    /* Sidebar */
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 40% 85%;
+    --sidebar-primary: 187 85% 53%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 217 33% 14%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 217 33% 15%;
+    --sidebar-ring: 187 85% 53%;
+  }
+
+  /* Force dark theme - no light mode */
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 187 85% 53%;
+    --primary-foreground: 222 47% 6%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 217 33% 12%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 187 85% 53%;
+    --accent-foreground: 222 47% 6%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 18%;
+    --input: 217 33% 15%;
+    --ring: 187 85% 53%;
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 40% 85%;
+    --sidebar-primary: 187 85% 53%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 217 33% 14%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 217 33% 15%;
+    --sidebar-ring: 187 85% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Monospace for data/code */
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer components {
+  /* Severity badges */
+  .severity-critical {
+    @apply bg-severity-critical/20 text-severity-critical border border-severity-critical/30;
+  }
+  
+  .severity-high {
+    @apply bg-severity-high/20 text-severity-high border border-severity-high/30;
+  }
+  
+  .severity-medium {
+    @apply bg-severity-medium/20 text-severity-medium border border-severity-medium/30;
+  }
+  
+  .severity-low {
+    @apply bg-severity-low/20 text-severity-low border border-severity-low/30;
+  }
+
+  .severity-info {
+    @apply bg-severity-info/20 text-severity-info border border-severity-info/30;
+  }
+
+  /* Status badges */
+  .status-blocked {
+    @apply bg-status-blocked/20 text-status-blocked border border-status-blocked/30;
+  }
+  
+  .status-allowed {
+    @apply bg-status-allowed/20 text-status-allowed border border-status-allowed/30;
+  }
+
+  /* Glow effects */
+  .glow-cyan {
+    box-shadow: var(--glow-cyan);
+  }
+  
+  .glow-red {
+    box-shadow: var(--glow-red);
+  }
+  
+  .glow-green {
+    box-shadow: var(--glow-green);
+  }
+
+  /* Panel styling */
+  .soc-panel {
+    @apply bg-card border border-border rounded-lg p-4 backdrop-blur-sm;
+  }
+
+  .soc-panel-header {
+    @apply flex items-center justify-between mb-4 pb-3 border-b border-border;
+  }
+
+  .soc-panel-title {
+    @apply text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2;
+  }
+
+  /* Data table styling */
+  .soc-table {
+    @apply w-full text-sm;
+  }
+
+  .soc-table thead {
+    @apply bg-muted/50;
+  }
+
+  .soc-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider;
+  }
+
+  .soc-table td {
+    @apply px-4 py-3 font-mono text-sm border-b border-border/50;
+  }
+
+  .soc-table tbody tr {
+    @apply hover:bg-muted/30 transition-colors cursor-pointer;
+  }
+
+  /* Scrollbar styling */
+  .soc-scrollbar::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .soc-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted/20 rounded;
+  }
+
+  .soc-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded hover:bg-muted-foreground/30;
+  }
+
+  /* Pulse animation for live indicators */
+  .pulse-live {
+    animation: pulse-live 2s infinite;
+  }
+
+  @keyframes pulse-live {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+  }
+
+  /* Metric card */
+  .metric-card {
+    @apply soc-panel flex flex-col gap-2 hover:border-primary/30 transition-colors;
+  }
+
+  .metric-value {
+    @apply text-3xl font-bold font-mono;
+  }
+
+  .metric-label {
+    @apply text-xs text-muted-foreground uppercase tracking-wide;
+  }
+
+  /* Alert item */
+  .alert-item {
+    @apply flex items-center gap-3 p-3 rounded-md bg-muted/30 border border-border/50 hover:border-primary/30 transition-all cursor-pointer;
+  }
+
+  .alert-item:hover {
+    @apply bg-muted/50;
+  }
+}
+
+@layer utilities {
+  /* Severity color utilities */
+  .text-severity-critical {
+    color: hsl(var(--severity-critical));
+  }
+  .text-severity-high {
+    color: hsl(var(--severity-high));
+  }
+  .text-severity-medium {
+    color: hsl(var(--severity-medium));
+  }
+  .text-severity-low {
+    color: hsl(var(--severity-low));
+  }
+  .text-severity-info {
+    color: hsl(var(--severity-info));
+  }
+  .text-severity-safe {
+    color: hsl(var(--severity-safe));
+  }
+
+  .bg-severity-critical {
+    background-color: hsl(var(--severity-critical));
+  }
+  .bg-severity-high {
+    background-color: hsl(var(--severity-high));
+  }
+  .bg-severity-medium {
+    background-color: hsl(var(--severity-medium));
+  }
+  .bg-severity-low {
+    background-color: hsl(var(--severity-low));
+  }
+  .bg-severity-info {
+    background-color: hsl(var(--severity-info));
+  }
+  .bg-severity-safe {
+    background-color: hsl(var(--severity-safe));
+  }
+
+  .border-severity-critical {
+    border-color: hsl(var(--severity-critical));
+  }
+  .border-severity-high {
+    border-color: hsl(var(--severity-high));
+  }
+  .border-severity-medium {
+    border-color: hsl(var(--severity-medium));
+  }
+  .border-severity-low {
+    border-color: hsl(var(--severity-low));
+  }
+
+  .text-status-blocked {
+    color: hsl(var(--status-blocked));
+  }
+  .text-status-allowed {
+    color: hsl(var(--status-allowed));
+  }
+  .bg-status-blocked {
+    background-color: hsl(var(--status-blocked));
+  }
+  .bg-status-allowed {
+    background-color: hsl(var(--status-allowed));
+  }
+  .border-status-blocked {
+    border-color: hsl(var(--status-blocked));
+  }
+  .border-status-allowed {
+    border-color: hsl(var(--status-allowed));
+  }
+}
