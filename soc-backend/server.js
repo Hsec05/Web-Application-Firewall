@@ -30,16 +30,60 @@ const app  = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // curl, Postman, same-origin
-    // Allow localhost
+  origin: async (origin, callback) => {
+    if (!origin) return callback(null, true);
     if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return callback(null, true);
-    // Allow any device on local network (192.168.x.x / 10.x.x.x)
     if (/^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01]))/.test(origin)) return callback(null, true);
-    // Allow VS Code dev tunnels
     if (/\.devtunnels\.ms$/.test(origin)) return callback(null, true);
-    // Allow configured frontend URL from .env
     if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
+
+    // ── Log CSRF attempt matching your DB schema ──────────────────
+    const logEntry = {
+      id:                 require('uuid').v4(),
+      timestamp:          new Date(),
+      attackType:         'CSRF',
+      sourceIP:           'unknown',          // no req object here
+      targetURL:          'CORS-preflight',
+      severity:           'high',
+      action:             'blocked',
+      country:            null,
+      countryCode:        null,
+      latitude:           null,
+      longitude:          null,
+      requestMethod:      'OPTIONS',          // CORS is always a preflight
+      userAgent:          null,
+      ruleId:             'WAF-CORS-001',
+      ruleName:           'CORS Policy',
+      matchedSIDs:        null,
+      snortMsg:           null,
+      falsePositiveScore: 0,
+      cveReference:       null,
+      device: {
+        os:             'Unknown',
+        browser:        'Unknown',
+        deviceType:     'Unknown',
+        isMaliciousTool: true,
+        toolName:       `CSRF from ${origin}`,
+        fingerprint:    null,
+      },
+      network: {
+        forwardedFor:   null,
+        realIP:         null,
+        cfConnectingIP: null,
+        protocol:       'https',
+        httpVersion:    null,
+      },
+      requestSize:    0,
+      contentType:    null,
+      referer:        origin,   // origin IS the referer in CSRF context
+      acceptLanguage: null,
+    };
+
+    db.insertAlert(logEntry).catch(err => 
+      console.error('CORS alert DB write failed:', err.message)
+    );
+    // ─────────────────────────────────────────────────────────────
+
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   methods: ["GET","POST","PATCH","DELETE","OPTIONS"],
@@ -87,6 +131,16 @@ app.post("/api/admin/simulator/stop", (req, res) => {
 app.get("/api/admin/simulator/status", (req, res) => {
   const { simulatorInterval } = require("./simulator/trafficSimulator");
   res.json({ running: simulatorInterval !== null });
+});
+
+// Expose it via an API endpoint
+app.get('/api/waf/stats/request-count', (req, res) => {
+  try {
+    res.json(wafMiddleware.getRequestCount());
+  } catch (err) {
+    console.error('request-count route error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const TARGET_SITE = process.env.TARGET_SITE || "http://localhost:3000";
@@ -145,8 +199,13 @@ app.use((req, res) => {
     req.pipe(proxy, { end: true });
   }
 });
-app.use((err, req, res, next) => { console.error("Unhandled error:", err.message); res.status(500).json({ error: "Internal server error" }); });
-
+app.use((err, req, res, next) => {
+  if (err.message?.startsWith('CORS:')) {
+    return res.status(403).json({ error: err.message });
+  }
+  console.error("Unhandled error:", err.message);
+  res.status(500).json({ error: "Internal server error" });
+});
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 async function boot() {
   try {

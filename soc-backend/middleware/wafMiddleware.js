@@ -5,6 +5,11 @@ const { matchSnortRules, getMatchedSIDs, isWhitelisted } = require("./snortRules
 const geoip = require("../geoip");
 const wafConfig = require("../wafConfig");
 
+// At the top of your WAF middleware file
+let totalRequestCount = 0;
+let falsePositiveCount = 0;  
+let countResetTime = Date.now();
+
 // ─── Rules Cache (prevents a DB round-trip on every single request) ───────────
 // Rules change rarely (only when admin edits them). Cache for 10 seconds so
 // the WAF always uses near-live rules without hammering the DB pool.
@@ -116,7 +121,7 @@ function checkBruteForce(ip, threshold = 5) {
   if (now - entry.firstAttempt > window) { store.bruteForceTracker.set(ip, { count: 1, firstAttempt: now }); return false; }
   entry.count++;
   store.bruteForceTracker.set(ip, entry);
-  return entry.count > threshold;
+  return entry.count >= threshold;
 }
 
 function checkRateLimit(ip, threshold) {
@@ -252,9 +257,10 @@ function getBlockedIPLogEntries(ip, currentEntry) {
 }
 
 const wafMiddleware = async (req, res, next) => {
+  
   const skipPaths = ["/health", "/api/dashboard", "/api/alerts", "/api/incidents", "/api/rules", "/api/reports", "/api/analytics", "/api/ip", "/api/admin", "/api/threat-map", "/api/auth"];
   if (skipPaths.some((p) => req.path.startsWith(p))) return next();
-
+  totalRequestCount++;
   const ip = getRealIP(req);
   const deviceInfo = parseDeviceInfo(req.headers["user-agent"]);
   const deviceFingerprint = buildDeviceFingerprint(req);
@@ -294,12 +300,16 @@ const wafMiddleware = async (req, res, next) => {
   const ddosThreshold = wafConfig.applyThreshold(ddosRule?.threshold || wafConfig.config.rateLimitRpm);
 
   let isBruteForce = false;
+  let isBruteForceAttempt = false;
   const isLoginAttempt = req.method === "POST" && req.path.includes("/api/login");
-  if (isLoginAttempt) isBruteForce = checkBruteForce(ip, bfThreshold);
+  if (isLoginAttempt) { 
+    isBruteForce = checkBruteForce(ip, bfThreshold);
+    isBruteForceAttempt = !isBruteForce;
+  }
   const isRateLimited = checkRateLimit(ip, ddosThreshold);
 
   let finalAttackType = bestSnortMatch ? bestSnortMatch.category : null;
-  if (isBruteForce) finalAttackType = "Brute Force";
+  if (isBruteForce || isBruteForceAttempt) finalAttackType = "Brute Force";
   if (isRateLimited && !finalAttackType) finalAttackType = "DDoS";
 
   let severity = bestSnortMatch ? bestSnortMatch.effectiveSeverity : (store.SEVERITY_MAP[finalAttackType] || "info");
@@ -309,7 +319,7 @@ const wafMiddleware = async (req, res, next) => {
   // NEW: Threshold-based blocking for ALL attack types
   // ═══════════════════════════════════════════════════════════════════════════
   let thresholdExceeded = false;
-  if (finalAttackType && matchedRule && matchedRule.enabled) {
+  if (finalAttackType && matchedRule && matchedRule.enabled && finalAttackType !== "Brute Force") {
     const attackThreshold = matchedRule.threshold || 1;
     thresholdExceeded = checkAttackThreshold(ip, finalAttackType, attackThreshold, 5);
   }
@@ -319,7 +329,17 @@ const wafMiddleware = async (req, res, next) => {
 if (matchedRule) {
   if (!matchedRule.enabled) {
     action = "allowed"; // rule disabled — let through
-  } else {
+  } else if (isBruteForce) {
+    // checkBruteForce() already counted to threshold — block immediately
+    action = matchedRule.action;
+      } else if (isBruteForceAttempt) {
+  action = "allowed";                 // ✅ below threshold → log as allowed
+      }
+    else if (isRateLimited) {
+  // checkRateLimit() already handled the counting — block immediately
+  action = matchedRule.action;
+    }
+  else {
     // ── Threshold gate ──────────────────────────────────────────
     // Check how many times this IP has triggered this attack type.
     // Only block once the threshold is reached — before that, log
@@ -364,6 +384,12 @@ if (matchedRule) {
   }
 
   if (action === "blocked") {
+
+       // ── FP tracking ──────────────────────────────────────────
+      if (req.headers['x-sim-session-type'] === 'false-positive') {
+        falsePositiveCount++;
+      }
+
       if (severity === "critical" || isBruteForce || thresholdExceeded) {
         store.blockedIPs.add(ip);
 
@@ -426,3 +452,8 @@ function buildLogEntry({ req, ip, countryData, deviceInfo, deviceFingerprint, at
 
 module.exports = wafMiddleware;
 module.exports.invalidateRulesCache = invalidateRulesCache;
+module.exports.getRequestCount = () => ({        
+  total: totalRequestCount,
+  falsePositives: falsePositiveCount,
+  since: new Date(countResetTime).toISOString(),
+});

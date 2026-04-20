@@ -81,7 +81,8 @@ export const getRiskScoreBg = (score: number): string => {
   return 'bg-severity-info';
 };
 
-export const getCountryFlag = (countryCode: string): string => {
+export const getCountryFlag = (countryCode: string | null | undefined): string => {
+  if (!countryCode) return '🌐';
   // Convert country code to flag emoji
   const codePoints = countryCode
     .toUpperCase()

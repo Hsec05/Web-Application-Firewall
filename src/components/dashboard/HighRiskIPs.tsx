@@ -63,7 +63,7 @@ export function HighRiskIPs({ profiles, className }: HighRiskIPsProps) {
                 </td>
                 <td>
                   <span className="flex items-center gap-1">
-                    {getCountryFlag(profile.countryCode)}
+                    {getCountryFlag(profile.countryCode ?? '')}
                     <span className="text-muted-foreground">{profile.countryCode}</span>
                   </span>
                 </td>
