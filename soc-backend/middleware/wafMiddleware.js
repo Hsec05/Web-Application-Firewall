@@ -320,8 +320,8 @@ const wafMiddleware = async (req, res, next) => {
   // ═══════════════════════════════════════════════════════════════════════════
   let thresholdExceeded = false;
   if (finalAttackType && matchedRule && matchedRule.enabled && finalAttackType !== "Brute Force") {
-    const attackThreshold = matchedRule.threshold || 1;
-    thresholdExceeded = checkAttackThreshold(ip, finalAttackType, attackThreshold, 5);
+    const scaledThreshold = wafConfig.applyThreshold(matchedRule.threshold || wafConfig.config.blockThreshold);
+    thresholdExceeded = checkAttackThreshold(ip, finalAttackType, scaledThreshold, 5);
   }
 
 
@@ -340,37 +340,11 @@ if (matchedRule) {
   action = matchedRule.action;
     }
   else {
-    // ── Threshold gate ──────────────────────────────────────────
-    // Check how many times this IP has triggered this attack type.
-    // Only block once the threshold is reached — before that, log
-    // it as "allowed" so the frontend shows the correct progression.
-    // Threshold is scaled by the System Settings sensitivity level.
-    const threshold = wafConfig.applyThreshold(matchedRule.threshold || wafConfig.config.blockThreshold);
-
-    if (threshold <= 1) {
-      // Threshold of 1 means block on first detection
-      action = matchedRule.action;
-    } else {
-      // Increment counter for this IP + attack type
-      const trackerKey = `${ip}::${finalAttackType}`;
-      const now        = Date.now();
-      const window     = 5 * 60 * 1000; // 5-minute rolling window
-
-      let entry = store.attackThresholdTracker.get(trackerKey);
-      if (!entry || (now - entry.firstSeen) > window) {
-        // Fresh window — start counting from 1
-        entry = { count: 1, firstSeen: now };
-      } else {
-        entry.count++;
-      }
-      store.attackThresholdTracker.set(trackerKey, entry);
-
-      if (entry.count >= threshold) {
-        action = matchedRule.action; // threshold met — apply rule action
-      } else {
-        action = "allowed"; // threshold not yet met — log but allow through
-      }
-    }
+    if (thresholdExceeded) {
+  action = matchedRule.action;
+} else {
+  action = "allowed";
+}
   }
 } else if (bestSnortMatch && bestSnortMatch.shouldBlock) {
   action = "blocked"; // no DB rule, use snort fallback

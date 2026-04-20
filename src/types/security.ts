@@ -2,7 +2,7 @@
 
 export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 export type Action = 'blocked' | 'allowed';
-export type AttackType = 'SQLi' | 'XSS' | 'Brute Force' | 'DDoS' | 'Path Traversal' | 'RCE' | 'CSRF' | 'Other';
+export type AttackType = 'SQLi' | 'XSS' | 'Brute Force' | 'DDoS' | 'Path Traversal' | 'RCE' | 'CSRF' | 'XXE'| 'SSRF' | 'NoSQLi' | 'Open Redirect' | 'Prototype Pollution' | 'HTTP Smuggling' | 'Auth' | 'Recon' | 'Other';
 
 export interface SecurityAlert {
   id: string;

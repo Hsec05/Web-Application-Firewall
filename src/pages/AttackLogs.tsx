@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Search, Filter, X, ExternalLink, Copy, CheckCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const attackTypes: AttackType[] = ['SQLi', 'XSS', 'Brute Force', 'DDoS', 'Path Traversal', 'RCE', 'CSRF', 'Other'];
+const attackTypes: AttackType[] = ['SQLi', 'XSS', 'Brute Force', 'DDoS', 'Path Traversal', 'RCE', 'CSRF', 'Auth', 'XXE', 'SSRF', 'NoSQLi','Open Redirect', 'Prototype Pollution', 'HTTP Smuggling', 'Recon', 'Other'];
 const severities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 
 const AttackLogs = () => {
