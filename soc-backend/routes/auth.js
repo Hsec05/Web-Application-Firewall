@@ -6,7 +6,7 @@
 const express  = require("express");
 const router   = express.Router();
 const crypto   = require("crypto");
-const { Pool } = require("pg");
+const nodemailer = require("nodemailer");const { Pool } = require("pg");
 
 // Lazy-load optional deps so the server still boots if not installed yet
 let jwt, bcrypt;
@@ -191,13 +191,37 @@ router.post("/forgot-password", async (req, res) => {
     const frontendUrl  = process.env.FRONTEND_URL || "http://localhost:8080";
     const resetLink    = `${frontendUrl}/reset-password?token=${rawToken}`;
 
-    // In production: send email here via nodemailer / SendGrid / etc.
-    console.log(`\n📧  Password reset link for ${email}:\n   ${resetLink}\n`);
+    // 1. Configure the email server connection (using the same .env variables)
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: process.env.SMTP_PORT === "465",
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
 
+      // 2. Draft the password reset email
+      const mailOptions = {
+        from: `"SOC Dashboard Security" <${process.env.SMTP_USER}>`,
+        to: email, 
+        subject: `Password Reset Request - SOC Dashboard`,
+        text: `Hello,\n\nYou requested a password reset. Please click the link below to securely reset your password:\n\n${resetLink}\n\nThis link will expire in 1 hour.\n\nIf you did not request this, please ignore this email.`,
+      };
+
+      // 3. Send the email
+      await transporter.sendMail(mailOptions);
+      console.log(`📧  Password reset email sent successfully to: ${email}`);
+    } catch (mailErr) {
+      console.error("Failed to send reset email:", mailErr.message);
+      // We log the error, but we don't crash the request.
+    }
+
+    // 4. Return the standard response
     res.json({
-      message: "If that email exists, a reset link has been sent.",
-      // DEV ONLY — remove this field in production:
-      _devResetLink: resetLink,
+      message: "If that email exists, a reset link has been sent."
     });
   } catch (err) {
     console.error("Forgot-password error:", err.message);

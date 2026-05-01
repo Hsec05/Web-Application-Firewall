@@ -3,14 +3,6 @@
  * ─────────────────────────────────────────
  * Implements Snort-compatible rule syntax and matching for WAF detection.
  *
- * Improvements over v1:
- *  - Tighter PCRE patterns with double/triple encoding coverage
- *  - New attack categories: XXE, SSRF, Open Redirect, HTTP Smuggling,
- *    NoSQLi, LFI/RFI, Prototype Pollution, SSTI, JWT tampering
- *  - Expanded scanner/tool fingerprinting
- *  - Improved false-positive scoring with context-aware exemptions
- *  - Built-in true-positive / true-negative / false-positive test suite
- *
  * Rule format: action proto src_ip src_port direction dst_ip dst_port (options)
  * Example: alert tcp any any -> $HTTP_SERVERS $HTTP_PORTS (msg:"SQLi"; sid:1000001; rev:1;)
  */
@@ -474,7 +466,7 @@ const SNORT_RULES = [
   // ══════════════════════════════════════════════════════════════════════════
 
   {
-    sid: 1000060, rev: 2, action: "alert", proto: "tcp",
+    sid: 1000140, rev: 2, action: "alert", proto: "tcp",
     msg: "Log4Shell - JNDI injection (CVE-2021-44228)",
     category: "RCE", severity: "critical", priority: 1,
     classtype: "attempted-admin",
@@ -484,7 +476,7 @@ const SNORT_RULES = [
   },
 
   {
-    sid: 1000061, rev: 1, action: "alert", proto: "tcp",
+    sid: 1000141, rev: 1, action: "alert", proto: "tcp",
     msg: "ShellShock - Bash function in header (CVE-2014-6271)",
     category: "RCE", severity: "critical", priority: 1,
     classtype: "attempted-admin",
@@ -515,7 +507,7 @@ const SNORT_RULES = [
   // ══════════════════════════════════════════════════════════════════════════
 
   {
-    sid: 1000050, rev: 2, action: "alert", proto: "tcp",
+    sid: 1000160, rev: 2, action: "alert", proto: "tcp",
     msg: "CSRF - Cross-origin request without valid Origin/Referer",
     category: "CSRF", severity: "medium", priority: 3,
     classtype: "web-application-attack",
