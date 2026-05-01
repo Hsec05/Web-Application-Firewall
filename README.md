@@ -286,43 +286,7 @@ This launches:
 
 Press **Ctrl+C** to cleanly stop all three services.
 
-#### Option B: Start Each Service Manually
-
-In three separate terminal windows:
-
-```bash
-# Terminal 1 — Backend
-cd soc-backend
-npm run dev          # Uses nodemon for auto-reload
-```
-
-```bash
-# Terminal 2 — Frontend
-npm run dev          # Starts Vite on port 8080
-```
-
-```bash
-# Terminal 3 — Target Site
-cd target-site
-npm start            # Starts NexMart on port 3000
-```
-
 ---
-
-### ✅ Verify It's Working
-
-Once started, you should see this in the backend logs:
-
-```
-✅  PostgreSQL: Schema ready — loaded 0 blocked IPs
-✅  PostgreSQL: Seeded 7 WAF rules
-🔐  Default admin created  →  admin / admin123
-🛡️  SOC Dashboard (PostgreSQL) running
-   ✅ http://localhost:5000
-   🗄️  Database: waf_dashboard @ localhost
-```
-
-Now open your browser and go to: **http://localhost:8080**
 
 ---
 
@@ -364,23 +328,6 @@ Every HTTP request to the backend passes through `wafMiddleware.js` before reach
 8. **Action enforcement** — based on the matched rule's action: `log`, `monitor`, `challenge`, or `block`
 9. **Persist alert** — writes to both the in-memory store (for live feed) and PostgreSQL (for history)
 
-### Snort Rules Engine
-
-The rules engine (`snortRules.js`) implements a Snort-compatible rule syntax. Each rule contains:
-
-```javascript
-{
-  sid: 1000001,               // Unique rule ID
-  rev: 4,                     // Revision number
-  action: "alert",            // log | monitor | challenge | block
-  category: "SQLi",           // Attack category
-  severity: "critical",       // critical | high | medium | low
-  priority: 1,                // Rule priority (1 = highest)
-  pcre: /UNION.*SELECT/i,     // The PCRE detection pattern
-  msg: "SQLi - UNION SELECT", // Human-readable alert message
-  reference: "OWASP-SQLi-001" // External reference
-}
-```
 
 **Supported attack categories out-of-the-box:**
 
@@ -414,15 +361,6 @@ The incident engine (`incidentEngine.js`) runs automatically every 5 minutes. It
 ### WAF Configuration & Sensitivity
 
 The WAF configuration is stored in `soc_settings` (PostgreSQL) and refreshed every 30 seconds without needing a server restart. Configurable settings include:
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `waf.sensitivity` | `medium` | Rule threshold multiplier (low / medium / high / paranoid) |
-| `waf.block_threshold` | `5` | Hits before auto-blocking an IP |
-| `waf.log_threshold` | `2` | Hits before escalating from log to monitor |
-| `waf.rate_limit_rpm` | `300` | Max requests per minute per IP |
-| `waf.block_duration_min` | `60` | Auto-block duration in minutes (0 = permanent) |
-| `waf.whitelist_ips` | `[]` | IP addresses / CIDR ranges to always allow |
 
 **Sensitivity multipliers:**
 
@@ -481,86 +419,12 @@ The system implements a three-tier RBAC model enforced at both the **backend API
 | Audit Logs (`/audit-logs`) | ✅ | ❌ | ❌ |
 | System Settings (`/system-settings`) | ✅ | ❌ | ❌ |
 
-### How It Is Enforced
-
-**Backend — `requireAdmin` middleware** (in `routes/users.js`, `routes/auditLogs.js`, `routes/settings.js`):
-
-```js
-function requireAdmin(req, res, next) {
-  const payload = jwt.verify(token, JWT_SECRET);
-  if (payload.role !== "admin") return res.status(403).json({ error: "Admin access required" });
-  req.authUser = payload;
-  next();
-}
-```
-
-Routes guarded by `requireAdmin`:
-- `GET/PATCH/DELETE /api/users` — user management
-- `GET /api/audit-logs` — audit trail
-- `GET/PATCH /api/settings` — WAF configuration
-- `PUT /api/settings/whitelist` — IP whitelist management
-
-**Frontend — Sidebar navigation filtering** (in `src/components/layout/AppSidebar.tsx`):
-
-```ts
-// Admin-only pages — only injected into nav when role === 'admin'
-...(user?.role === 'admin' ? [
-  { title: 'Users',           href: '/users'           },
-  { title: 'Audit Logs',      href: '/audit-logs'      },
-  { title: 'System Settings', href: '/system-settings' },
-] : []),
-
-// Viewer role — restricted to read-only pages only
-const viewerAllowedHrefs = new Set(['/', '/threat-map', '/logs', '/analytics', '/reports']);
-const navItems = user?.role === 'viewer'
-  ? allNavItems.filter(item => viewerAllowedHrefs.has(item.href))
-  : allNavItems;
-```
-
-### Valid Roles & Default
-
-The backend validates roles on registration and update. Any unrecognised value defaults to `analyst`:
-
-```js
-const VALID_ROLES = ["admin", "analyst", "viewer"];
-const assignedRole = VALID_ROLES.includes(role) ? role : "analyst";
-```
 
 ### Account Lifecycle
 
 Accounts can be deactivated without deletion (soft-disable via `is_active = false`). A deactivated user's login attempt is rejected and written to the audit log with `outcome: "failure"`. Admins cannot deactivate or delete their own account.
 
 ---
-
-## 🗺️ Use Case Diagram
-
-The diagram below maps every actor to the system use cases they can trigger, including the internal `«includes»` relationships for the WAF core.
-
-```
-Actors & their use cases
-─────────────────────────────────────────────────────────────────────
-Web User          →  Process HTTP Request
-Malicious User    →  Process HTTP Request
-
-Security Viewer   →  Generate Reports
-                  →  View Dashboard
-
-Security Analyst  →  Generate Reports
-                  →  View Dashboard
-                  →  Manage WAF Rules
-                  →  Review Security Logs
-
-Security Admin    →  Generate Reports
-                  →  View Dashboard
-                  →  Manage WAF Rules
-                  →  Review Security Logs
-
-Internal «includes» relationships (triggered by Process HTTP Request)
-─────────────────────────────────────────────────────────────────────
-Process HTTP Request  «includes»  Correlate Threats       (incidentEngine.js)
-Process HTTP Request  «includes»  Inspect Payloads (Snort) (snortRules.js)
-Process HTTP Request  «includes»  Analyze IP Risk          (geoip.js + ipIntelligence)
-```
 
 ### Actor Descriptions
 
