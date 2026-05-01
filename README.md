@@ -19,9 +19,7 @@ Detect, block, and analyze web attacks in real time — powered by Snort-compati
 ## 📖 Table of Contents
 
 - [What Is This Project?](#-what-is-this-project)
-- [Architecture Overview](#-architecture-overview)
 - [Features](#-features)
-- [Project Structure](#-project-structure)
 - [Prerequisites](#-prerequisites)
 - [Installation & Setup](#-installation--setup)
   - [Step 1 — Clone the Repository](#step-1--clone-the-repository)
@@ -37,10 +35,7 @@ Detect, block, and analyze web attacks in real time — powered by Snort-compati
   - [Incident Engine](#incident-engine)
   - [WAF Configuration & Sensitivity](#waf-configuration--sensitivity)
 - [Dashboard Pages](#-dashboard-pages)
-- [API Reference](#-api-reference)
-- [Database Schema](#-database-schema)
 - [Traffic Simulator](#-traffic-simulator)
-- [Running Tests](#-running-tests)
 - [Environment Variables Reference](#-environment-variables-reference)
 - [Troubleshooting](#-troubleshooting)
 - [Tech Stack](#-tech-stack)
